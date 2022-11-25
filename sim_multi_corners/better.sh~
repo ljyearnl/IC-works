@@ -1,0 +1,110 @@
+#!/bin/bash
+
+
+
+
+# I suggest change voltage in alter
+
+
+main_sp="666.sp" 
+
+multi_sp_dir="777"
+
+queue="hspice" #hspice or dqueue
+simulator="finesim" #hspcie or finesim
+output_dir="888"
+
+# https://www.runoob.com/linux/linux-shell-variable.html
+
+mkdir -p ${multi_sp_dir}
+cp -f ${main_sp} ./${multi_sp_dir}/tt_25.sp
+
+
+
+sed -e '/\.lib/ s/tt/ff/g' ${main_sp} > ./${multi_sp_dir}/ff_25.sp
+sed -e '/\.lib/ s/tt/ss/g' ${main_sp} > ./${multi_sp_dir}/ss_25.sp
+sed -e '/\.lib/ s/tt/fs/g' ${main_sp} > ./${multi_sp_dir}/fs_25.sp
+sed -e '/\.lib/ s/tt/sf/g' ${main_sp} > ./${multi_sp_dir}/sf_25.sp
+
+
+
+sed -e '/\.temp/ s/25/100/g' ./${multi_sp_dir}/tt_25.sp > ./${multi_sp_dir}/tt_100.sp
+sed -e '/\.temp/ s/25/-10/g' ./${multi_sp_dir}/tt_25.sp > ./${multi_sp_dir}/tt_m00.sp
+
+sed -e '/\.temp/ s/25/100/g' ./${multi_sp_dir}/ff_25.sp > ./${multi_sp_dir}/ff_100.sp
+sed -e '/\.temp/ s/25/-10/g' ./${multi_sp_dir}/ff_25.sp > ./${multi_sp_dir}/ff_m00.sp
+
+sed -e '/\.temp/ s/25/100/g' ./${multi_sp_dir}/ss_25.sp > ./${multi_sp_dir}/ss_100.sp
+sed -e '/\.temp/ s/25/-10/g' ./${multi_sp_dir}/ss_25.sp > ./${multi_sp_dir}/ss_m00.sp
+
+sed -e '/\.temp/ s/25/100/g' ./${multi_sp_dir}/fs_25.sp > ./${multi_sp_dir}/fs_100.sp
+sed -e '/\.temp/ s/25/-10/g' ./${multi_sp_dir}/fs_25.sp > ./${multi_sp_dir}/fs_m00.sp
+
+sed -e '/\.temp/ s/25/100/g' ./${multi_sp_dir}/sf_25.sp > ./${multi_sp_dir}/sf_100.sp
+sed -e '/\.temp/ s/25/-10/g' ./${multi_sp_dir}/sf_25.sp > ./${multi_sp_dir}/sf_m00.sp
+
+
+
+
+cat > run_multicorner <<EOF
+
+bsub -q ${queue} ${simulator} ./${multi_sp_dir}/tt_25.sp -o ./${output_dir}/  
+bsub -q ${queue} ${simulator} ./${multi_sp_dir}/tt_m10.sp -o ./${output_dir}/ 
+bsub -q ${queue} ${simulator} ./${multi_sp_dir}/tt_100.sp -o ./${output_dir}/ 
+bsub -q ${queue} ${simulator} ./${multi_sp_dir}/ff_25.sp -o ./${output_dir}/  
+bsub -q ${queue} ${simulator} ./${multi_sp_dir}/ff_m10.sp -o ./${output_dir}/ 
+bsub -q ${queue} ${simulator} ./${multi_sp_dir}/ff_100.sp -o ./${output_dir}/ 
+bsub -q ${queue} ${simulator} ./${multi_sp_dir}/ss_25.sp -o ./${output_dir}/  
+bsub -q ${queue} ${simulator} ./${multi_sp_dir}/ss_m10.sp -o ./${output_dir}/ 
+bsub -q ${queue} ${simulator} ./${multi_sp_dir}/ss_100.sp -o ./${output_dir}/ 
+bsub -q ${queue} ${simulator} ./${multi_sp_dir}/fs_25.sp -o ./${output_dir}/  
+bsub -q ${queue} ${simulator} ./${multi_sp_dir}/fs_m10.sp -o ./${output_dir}/ 
+bsub -q ${queue} ${simulator} ./${multi_sp_dir}/fs_100.sp -o ./${output_dir}/ 
+bsub -q ${queue} ${simulator} ./${multi_sp_dir}/sf_25.sp -o ./${output_dir}/  
+bsub -q ${queue} ${simulator} ./${multi_sp_dir}/sf_m10.sp -o ./${output_dir}/ 
+bsub -q ${queue} ${simulator} ./${multi_sp_dir}/sf_100.sp -o ./${output_dir}/ 
+EOF
+
+
+chmod 755 run_multicorner
+
+echo "run_multicorner"
+
+
+# tran sim measure
+
+case "${simulator}" in
+    "hspice")
+cat > sortmeas.sh~ << EOF 
+#!/bin/bash
+echo "" > ${main_sp%.sp*}.csv
+for i in  ./${output_dir}/*.ma*
+do
+    sed "s/^/\${i##*/} &/g" \${i} >> ${main_sp%.sp*}.csv
+done
+
+sort -r -n ${main_sp%.sp*}.csv -o ${main_sp%.sp*}.csv
+uniq ${main_sp%.sp*}.csv > ${main_sp%.sp*}.csv.temp
+mv -f ${main_sp%.sp*}.csv.temp ${main_sp%.sp*}.csv
+EOF
+    ;;
+    "finesim")
+cat > sortmeas.sh~ << EOF 
+#!/bin/bash
+echo "" > ${main_sp%.sp*}.csv
+for i in  ./${output_dir}/*.mt*
+do
+    sed "s/^/\${i##*/} &/g" \${i} >> ${main_sp%.sp*}.csv
+done
+
+sort -r -n ${main_sp%.sp*}.csv -o ${main_sp%.sp*}.csv
+uniq ${main_sp%.sp*}.csv > ${main_sp%.sp*}.csv.temp
+mv -f ${main_sp%.sp*}.csv.temp ${main_sp%.sp*}.csv
+EOF
+    ;;
+esac
+
+
+chmod 755 sortmeas.sh~
+
+echo "sortmeas.sh~"
