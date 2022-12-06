@@ -37,6 +37,8 @@ sortmeas.sh~
 
 terminal输入`run_multicorner`，仿真5工艺角×3温度。
 
+会自动`watch bjobs`
+
 结果在`./888/`下。
 
 ## 第五步（可选）

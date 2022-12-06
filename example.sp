@@ -8,13 +8,14 @@
 *MAY THE FORCE BE WITH YOUR CIRCUIT
 
 ********************Options**********************
-*https://www.cnblogs.com/qiushuixiaozhanshi/p/6273206.html
+
 
 ****general
 .OPTION	INGOLD=2
 .OPTION	PARHIER=LOCAL
 .option BRIEF = 0
-
+.OPTION MEASFILE=1
+.OPTION MEASFAIL=1
 
 
 ****for spice
@@ -58,7 +59,18 @@ C1145141919810 VDD! NET_1145141919810 5n    $ This line means VDD! and NET_11451
 R1145141919810 0    NET_1145141919810 4
 
 *********************Measure*****************
-.tran 1000n 100u 
+.tran 1000n 100u sweep data=var
+
+.data var T2 T1 T0
++0 0 0
++0 0 1
++0 1 0
++0 1 1
++1 0 0
++1 0 1
++1 1 0
++1 1 1
+
 
 .op
 .probe V(*)
@@ -66,8 +78,29 @@ R1145141919810 0    NET_1145141919810 4
 .probe V(*) I(*) isub(*)
 
 
+.meas tran Tfall WHEN v(OUT) VAL='vvdd*0.5' fall=10
+
+.meas tran Tper1 trig v(OUT) VAL='vvdd*0.5' td='Tfall+1n' rise=1 targ v(OSCOUT)  VAL='vvdd*0.5' td='Tfall+1n' rise=2
+
+.meas tran Tpw1 trig v(OUT) VAL='vvdd*0.5' td='Tfall+1n' rise=1 targ v(OSCOUT)  VAL='vvdd*0.5' td='Tfall+1n' fall=1
 
 
+
+
+
+
+
+*test phase margin and gain of AMP, only works in hspice simulator
+
+V_AC  STB1  STB2 0 
+.LSTB mode=single vsource=V_AC
+.ac DEC 100 1 1G 
+
+.probe V(*) I(*) isub(*) 
+.probe ac LSTB(DB:lvf) LSTB(P:lvf)
+
+.meas ac PM find LSTB(P) when LSTB(DB)=0
+.meas ac GAIN max LSTB(DB)
 
 
 
