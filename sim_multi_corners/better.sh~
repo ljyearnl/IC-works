@@ -72,7 +72,7 @@ chmod 755 run_multicorner
 echo "run_multicorner"
 
 
-# tran sim measure
+# sort sim measure
 
 case "${simulator}" in
     "hspice")
@@ -87,6 +87,7 @@ done
 sort -r -k 2 ${main_sp%.sp*}.csv -o ${main_sp%.sp*}.csv
 uniq -f 1 ${main_sp%.sp*}.csv > ${main_sp%.sp*}.csv.temp
 mv -f ${main_sp%.sp*}.csv.temp ${main_sp%.sp*}.csv
+ll
 EOF
     ;;
     "finesim")
@@ -101,6 +102,7 @@ done
 sort -r -k 2 ${main_sp%.sp*}.csv -o ${main_sp%.sp*}.csv
 uniq -f 1 ${main_sp%.sp*}.csv > ${main_sp%.sp*}.csv.temp
 mv -f ${main_sp%.sp*}.csv.temp ${main_sp%.sp*}.csv
+ll
 EOF
     ;;
 esac
